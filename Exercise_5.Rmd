@@ -1,0 +1,87 @@
+---
+title: "Exercise_5"
+author: "Baily"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+![Figure 1. Blue Tit](Blue%20Tit%201.jpeg)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+packages_needed <- c("ggplot2", # graphics
+                     "plyr",
+                     "arm", # display() etc.
+                     "MASS",
+                     "dplyr",
+                     "ggfortify",
+                     "easystats"
+                     )
+pk_to_install <- packages_needed [!( packages_needed %in% rownames(installed.packages())  )]
+if(length(pk_to_install)>0 ){
+  install.packages(pk_to_install,repos="http://cran.r-project.org")
+}
+#lapply(packages_needed, require, character.only = TRUE)
+library(ggplot2)
+library(plyr)
+library(arm)
+library(MASS)
+library(dplyr)
+library(ggfortify)
+library(easystats)
+```
+
+```{r import data set}
+BlueTit_Data <- read.csv("SudykaBL2018.csv")
+Blue.glm <- glm(LRS ~ TL1, data = BlueTit_Data, family = poisson)
+
+Blue.glm
+```
+
+```{r plot Blue tit lifetime reproductive success against telomere length at age 1,message=FALSE, warning=FALSE, fig.width=4, fig.height=4}
+
+ggplot(BlueTit_Data, aes(TL1, LRS)) +
+  geom_point(size=2) +
+  geom_smooth (method=lm, color="blue") + #if you wanted to see the gaussian/identity fit
+  stat_smooth(method = glm, method.args = list(family = poisson(link = "log"))) +
+  labs(title="GLM, Blue Tit Data") +
+  xlab ("Telomere Length at age 1") +
+  ylab ("Lifetime Reproductive Success")
+
+```
+
+```{r blue.glm model}
+Blue2.glm <- glm(LRS ~ TL1, data = BlueTit_Data, family = poisson(link = log))
+Blue2.glm
+#this is the same model as above, but all defaults are explicitly reported rather than assumed
+```
+
+```{r diagnose Blue tit glm model, fig.width=6, fig.height=6}
+autoplot(Blue2.glm)
+```
+
+```{r anova}
+anova(Blue2.glm)
+```
+Telomere length at age one accounts for 0.048744 units of deviance leaving 156.52 units of unexplained deviance. (Total deviance = 156.57)
+
+
+
+```{r summary}
+summary(Blue2.glm)
+```
+
+```{r quasipoisson}
+Blue3.glm <- glm(LRS ~ TL1, data = BlueTit_Data, family = quasipoisson)
+Blue3.glm
+```
+```{r autoplot quasi}
+autoplot(Blue3.glm)
+```
+
+
+```{r summary quasi}
+summary(Blue3.glm)
+```
+
+It looks like the poisson is better than the quasipoisson 
